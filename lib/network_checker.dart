@@ -144,7 +144,7 @@ class _NetworkCheckerState extends State<NetworkChecker>{
   }
 
   void _startMonitoring() {
-    _connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+    _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> result) {
       _notifier._updateStatus(ConnectionStatus.checking);
       _checkNetworkStatus();
     });
