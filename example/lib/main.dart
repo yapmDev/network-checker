@@ -14,20 +14,8 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       home: NetworkChecker(
         alertBuilder: (context, status) => Material(child: ColoredBox(color: Colors.blue, child: Text(status.toString()))),
-          child: const MyHomePage()
-      ),
+          child: Center(child: Text("Online")) 
+      )
     );
-  }
-}
-
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-
-    final isConnected = NetworkProvider.of(context).value == ConnectionStatus.online;
-
-    return Scaffold(body: Center(child: Text(isConnected ? "Online":"Offline")));
   }
 }
