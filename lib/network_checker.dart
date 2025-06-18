@@ -2,14 +2,16 @@ library;
 
 /*
   author: yapmDev
-  lastModifiedDate: 23/02/25
+  lastModifiedDate: 18/06/25
   repository: https://github.com/yapmDev/network_checker
  */
 
-export 'src/core/notifier.dart';
-export 'src/core/scope.dart';
-export 'src/core/status.dart';
-export 'src/core/service.dart';
+export 'src/scope/scope.dart';
+
+export 'src/status/status.dart';
+
+export 'src/config/config.dart';
+export 'src/config/config_scope.dart';
 
 export 'src/ui/alert.dart';
 

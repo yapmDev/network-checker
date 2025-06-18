@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:network_checker/src/core/status.dart';
+import 'package:network_checker/src/config/config.dart';
+import 'package:network_checker/src/status/status.dart';
 
 /// A singleton service that monitors network connectivity and server availability. Used internally by NetworkChecker.
 class ConnectionService {
@@ -17,6 +19,7 @@ class ConnectionService {
   final List<void Function(ConnectionStatus)> _listeners = [];
 
   // Configuration
+  late ConnectionConfig _previousConfig;
   ConnectionConfig _config;
 
   // Stream subscription for connectivity changes
@@ -25,36 +28,56 @@ class ConnectionService {
   // Factory constructor to return the singleton instance.
   factory ConnectionService() {
     if (_instance == null) {
-      throw StateError("ConnectionService not initialized. Call initialize() first.");
+      throw StateError("ConnectionService not initialized. NetworkChecker is the owner of this service, so wrap your "
+          "app or specific view with it before use ConnectionConfigScope");
     }
     return _instance!;
   }
 
   // Private constructor.
   ConnectionService._internal(this._config) {
+    _previousConfig = _config;
     _startMonitoring();
   }
 
-  /// Initialize the service if not already initialized.6
-  static initialize(ConnectionConfig config) => _instance ??= ConnectionService._internal(config);
+  /// Initialize the service if not already initialized.
+  static ConnectionService init(ConnectionConfig config) => _instance ??= ConnectionService._internal(config);
 
   /// Updates the configuration for this service. Useful when you need to check connectivity with a different server.
   void updateConfig(ConnectionConfig config) {
+    if (kDebugMode) {
+      print("[NETWORK-CHECKER-SERVICE]: updating config");
+    }
+    _previousConfig = _config;
     _config = config;
+    checkNetworkStatus();
+  }
+
+  /// Restores previous configuration.
+  void restoreConfig() {
+    if (kDebugMode) {
+      print("[NETWORK-CHECKER-SERVICE]: restoring previous config");
+    }
+    _config = _previousConfig;
     checkNetworkStatus();
   }
 
   /// Disposes resources used by this service.
   void dispose() {
+    if (kDebugMode) {
+      print("[NETWORK-CHECKER-SERVICE]: disposing resources");
+    }
     _listeners.clear();
     _connectivitySubscription?.cancel();
     _instance = null;
   }
 
   /// Check the current network status. This method is called by `NetworkChecker` any time the network interfaces
-  /// changes. You can also call it by yourself, useful if it is possible for the connection status to change without
-  /// changing the network output interfaces.
+  /// changes.
   Future<void> checkNetworkStatus() async {
+    if (kDebugMode) {
+      print("[NETWORK-CHECKER-SERVICE]: checking network status");
+    }
     ConnectionStatus newStatus;
     try {
       final response = await http.head(Uri.parse(_config.pingUrl)).timeout(_config.timeLimit);
@@ -81,10 +104,12 @@ class ConnectionService {
 
   // Start monitoring for connectivity changes
   void _startMonitoring() {
+    if (kDebugMode) {
+      print("[NETWORK-CHECKER-SERVICE]: start monitoring");
+    }
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((_) {
       checkNetworkStatus();
     });
-    checkNetworkStatus();
   }
 
   // Notify all registered listeners about the network status change
@@ -93,19 +118,4 @@ class ConnectionService {
       listener(newStatus);
     }
   }
-}
-
-/// Configuration for the connection service
-class ConnectionConfig {
-
-  /// URL to ping to verify connection status.
-  final String pingUrl;
-
-  /// Timeout for the ping request.
-  final Duration timeLimit;
-
-  const ConnectionConfig({
-    required this.pingUrl,
-    required this.timeLimit
-  });
 }

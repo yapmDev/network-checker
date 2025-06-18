@@ -12,6 +12,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  go_router: ^15.2.0
+
   network_checker:
     path: ../
 

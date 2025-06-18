@@ -1,6 +1,5 @@
-import 'package:flutter/widgets.dart';
-import 'package:network_checker/src/core/scope.dart';
-import 'package:network_checker/src/core/status.dart';
+import 'package:flutter/material.dart';
+import 'package:network_checker/network_checker.dart';
 
 /// Create a template for a particular view where a network alert will appear if the current
 /// connection status detected by [NetworkChecker] is different from [ConnectionStatus.online].
@@ -28,20 +27,21 @@ class NetworkAlertTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    final networkNotifier = NetworkScope.of(context);
+    final networkNotifier = NetworkScope.of(context).notifier!;
 
     return ValueListenableBuilder(
       valueListenable: networkNotifier,
       child: child,
       builder: (context, connectionStatus, child) {
-        return Stack(fit: StackFit.expand ,children: [
-          child!,
-          if(connectionStatus != ConnectionStatus.online)
-            Align(alignment: alertPosition ?? Alignment.bottomCenter,
-              child: alertBuilder?.call(context, connectionStatus),
-            )
-        ]);
+        return Stack(
+            fit: StackFit.expand,
+            children: [
+              child!,
+              if(connectionStatus != ConnectionStatus.online)
+                Align(alignment: alertPosition ?? Alignment.bottomCenter,
+                  child: alertBuilder?.call(context, connectionStatus),
+                )
+            ]);
       },
     );
   }
