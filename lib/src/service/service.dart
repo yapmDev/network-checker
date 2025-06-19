@@ -40,6 +40,23 @@ class ConnectionService {
     _startMonitoring();
   }
 
+  // Start monitoring for connectivity changes
+  void _startMonitoring() {
+    if (kDebugMode) {
+      print("[NETWORK-CHECKER-SERVICE]: start monitoring");
+    }
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((_) {
+      checkNetworkStatus();
+    });
+  }
+
+  // Notify all registered listeners about the network status change
+  void _notifyListeners(ConnectionStatus newStatus) {
+    for (final listener in _listeners) {
+      listener(newStatus);
+    }
+  }
+
   /// Initialize the service if not already initialized.
   static ConnectionService init(ConnectionConfig config) => _instance ??= ConnectionService._internal(config);
 
@@ -76,10 +93,13 @@ class ConnectionService {
   /// changes.
   Future<void> checkNetworkStatus() async {
     if (kDebugMode) {
-      print("[NETWORK-CHECKER-SERVICE]: checking network status");
+      print("[NETWORK-CHECKER-SERVICE]: checking network status...");
     }
 
     ConnectionStatus newStatus = ConnectionStatus.checking;
+
+    // Prevent synchronous update during build.
+    Future.microtask(() => _notifyListeners(ConnectionStatus.checking));
 
     try {
 
@@ -130,22 +150,5 @@ class ConnectionService {
   /// Remove a previously registered listener
   void removeStatusListener(void Function(ConnectionStatus) listener) {
     _listeners.remove(listener);
-  }
-
-  // Start monitoring for connectivity changes
-  void _startMonitoring() {
-    if (kDebugMode) {
-      print("[NETWORK-CHECKER-SERVICE]: start monitoring");
-    }
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((_) {
-      checkNetworkStatus();
-    });
-  }
-
-  // Notify all registered listeners about the network status change
-  void _notifyListeners(ConnectionStatus newStatus) {
-    for (final listener in _listeners) {
-      listener(newStatus);
-    }
   }
 }
