@@ -68,7 +68,7 @@ class _PageBState extends State<PageB> {
   late NetworkScope _scope;
   void _printSomething(ConnectionStatus status) => print(status.toString());
 
-  void _handleScopeAndListener(){
+  void _handleScopeAndListener() {
     _scope = NetworkScope.of(context); // save the scope (depends on context) to safely access on dispose.
     _listener = _scope.registerListener(_printSomething);
   }
@@ -90,7 +90,7 @@ class _PageBState extends State<PageB> {
   Widget build(BuildContext context) {
     final isConnected = NetworkScope.statusOf(context) == ConnectionStatus.online;
     return ConnectionConfigScope(
-      config: ConnectionConfig(pingUrl: "https://www.gstatic.com/generate_204", timeLimit: Duration(seconds: 3)),
+      config: ConnectionConfig(pingUrl: "https://www.gstatic.com/generate_2044", timeLimit: Duration(seconds: 3)),
       child: Center(child: Column(
         mainAxisSize: MainAxisSize.min,
         spacing: 8.0,

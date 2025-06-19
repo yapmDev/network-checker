@@ -72,24 +72,54 @@ class ConnectionService {
     _instance = null;
   }
 
-  /// Check the current network status. This method is called by `NetworkChecker` any time the network interfaces
+  /// Check the current network status. This method is called by [NetworkChecker] any time the network interfaces
   /// changes.
   Future<void> checkNetworkStatus() async {
     if (kDebugMode) {
       print("[NETWORK-CHECKER-SERVICE]: checking network status");
     }
-    ConnectionStatus newStatus;
+
+    ConnectionStatus newStatus = ConnectionStatus.checking;
+
     try {
+
       final response = await http.head(Uri.parse(_config.pingUrl)).timeout(_config.timeLimit);
-      newStatus = response.statusCode == 204 ? ConnectionStatus.online : ConnectionStatus.serverError;
-    } on SocketException {
-      newStatus = ConnectionStatus.noInternet;
+
+      if (response.statusCode == 204) {
+        newStatus = ConnectionStatus.online;
+      } else if (response.statusCode >= 500) {
+        newStatus = ConnectionStatus.serverError;
+      } else if (response.statusCode >= 400) {
+        newStatus = ConnectionStatus.clientError;
+      } else {
+        newStatus = ConnectionStatus.unexpectedResponse;
+      }
+
     } on TimeoutException {
-      newStatus = ConnectionStatus.serverNotAvailable;
-    } catch (_) {
-      newStatus = ConnectionStatus.serverError;
+      newStatus = ConnectionStatus.serverUnreachable;
+    } on SocketException catch (e) {
+      if (e.osError != null && _isNetworkUnavailableError(e.osError!)) {
+        newStatus = ConnectionStatus.noInternet;
+      } else {
+        newStatus = ConnectionStatus.networkUnreachable;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("[NETWORK-CHECKER-SERVICE][UNEXPECTED ERROR]: $e");
+      }
+      newStatus = ConnectionStatus.unknownFailure;
     }
+
     _notifyListeners(newStatus);
+  }
+
+  bool _isNetworkUnavailableError(OSError osError) {
+    return [
+      7,    // No address associated with hostname
+      101,  // Network is unreachable
+      110,  // Connection timed out
+      113,  // No route to host
+    ].contains(osError.errorCode);
   }
 
   /// Add a listener for connection status changes
